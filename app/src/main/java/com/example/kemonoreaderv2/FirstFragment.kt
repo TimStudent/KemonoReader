@@ -51,6 +51,14 @@ class FirstFragment : Fragment() {
             when (state) {
                 is UIState.LOADING -> {
                     binding.Loading.visibility = View.VISIBLE
+                    AlertDialog.Builder(requireActivity())
+                        .setTitle("Download Started")
+                        .setMessage("Downloading...")
+                        .setNegativeButton("Dismiss") { dialog, _ ->
+                            dialog.dismiss()
+                        }
+                        .create()
+                        .show()
                 }
                 is UIState.SUCCESS -> {
                     binding.Loading.visibility = View.INVISIBLE
@@ -77,6 +85,7 @@ class FirstFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        binding.Loading.visibility = View.INVISIBLE
         recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -110,11 +119,6 @@ class FirstFragment : Fragment() {
                 mKemonoViewModel.downloadZipFromUrl()
             }
         }
-
-        /**
-         * TODO: Implement ExoPlayer to Stream Videos to User in Second Fragment
-         * TODO: Scroll Left to Right
-         */
     }
     private fun check() {
         mKemonoViewModel.readAllFromUrl(mKemonoViewModel.link)

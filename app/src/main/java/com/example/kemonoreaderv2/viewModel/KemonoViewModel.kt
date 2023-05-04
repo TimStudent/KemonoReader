@@ -19,7 +19,7 @@ import okhttp3.internal.wait
 import java.io.*
 import java.net.URL
 
-class KemonoViewModel: ViewModel() {
+class KemonoViewModel : ViewModel() {
     var link = URL("https://kemono.party/fanbox/user/49494721/post/4516154")
     var newFileName = ""
     var mp4State = false
@@ -28,75 +28,29 @@ class KemonoViewModel: ViewModel() {
     var zipState = false
     private var a = 0
     var listOfLinks = mutableListOf<String>()
-    private val _data: MutableLiveData<UIState> = MutableLiveData(UIState.LOADING)
+    private val _data: MutableLiveData<UIState> = MutableLiveData(UIState.SUCCESS())
     val data: LiveData<UIState> get() = _data
 
-    init {
-
-    }
-
     fun downloadMp4FromUrl() {
-        Log.d("Download", "Start")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                readMp4FromUrl(link).let {
-                    it.forEach { link ->
-                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
-                        val directory = "/storage/emulated/0/Download/" +
-                                newFileName + String.format("%02d", a) + ".mp4"
-                        saveFile(body, directory)
-                        a++
-                    }
-                }
-                a = 0
-            }
-            catch (e:Exception) {
-                println(e)
-            }
-        }
-    }
-//    fun downloadJpgFromUrl() {
-//        Log.d("Download", "Start")
-//        viewModelScope.launch(Dispatchers.IO) {
-//            try {
-//                readJpgFromUrl(link).let {
-//                    for (link in it) {
-//                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
-//                        val directory = "/storage/emulated/0/Download/" +
-//                                newFileName + String.format("%02d", a) + ".jpg"
-//                        saveFile(body, directory)
-//                        a++
-//                        Log.d("Download", directory)
-//                        Log.d("Download", a.toString())
-//                    }
-//                }
-//                a = 0
-//            }
-//            catch (e:Exception) {
-//                println(e)
-//            }
-//        }
-//    }
-    fun downloadJpgFromUrl() {
         viewModelScope.launch(Dispatchers.IO) {
             val flowHolder: Flow<UIState> = flow {
                 emit(UIState.LOADING)
                 try {
-                    readJpgFromUrl(link).let {
-                        for (link in it) {
-                            val response = ApiService.providesRetrofitClient().downloadFile(link)
-                            if (response.isSuccessful) {
-                                response.body()?.let { body ->
-                                    emit(UIState.SUCCESS())
-                                    val directory = "/storage/emulated/0/Download/" +
-                                    newFileName + String.format("%02d", a) + ".jpg"
-                                    saveFile(body, directory)
-                                }
-                            }
+                    readMp4FromUrl(link).let {
+                        it.forEach { link ->
+                            val response =
+                                ApiService.providesRetrofitClient().downloadFile(link).body()
+                            val directory = "/storage/emulated/0/Download/" +
+                                    newFileName + String.format("%02d", a) + ".mp4"
+                            saveFile(response, directory)
+                            a++
+                            Log.d("Download", directory)
+                            Log.d("Download", a.toString())
                         }
                     }
-                }
-                catch (e: Exception) {
+                    emit(UIState.SUCCESS())
+                    a = 0
+                } catch (e: Exception) {
                     emit(UIState.ERROR(e))
                 }
             }
@@ -107,82 +61,139 @@ class KemonoViewModel: ViewModel() {
             }
         }
     }
-    fun downloadPngFromUrl() {
-        Log.d("Download", "Start")
+
+    fun downloadJpgFromUrl() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                readPngFromUrl(link).let {
-                    it.forEach { link ->
-                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
-                        val directory = "/storage/emulated/0/Download/" +
-                                newFileName + String.format("%02d", a) + ".png"
-                        saveFile(body, directory)
-                        a++
-                        Log.d("Download", directory)
-                        Log.d("Download", a.toString())
+            val flowHolder: Flow<UIState> = flow {
+                emit(UIState.LOADING)
+                try {
+                    readJpgFromUrl(link).let {
+                        it.forEach { link ->
+                            val response =
+                                ApiService.providesRetrofitClient().downloadFile(link).body()
+                            val directory = "/storage/emulated/0/Download/" +
+                                    newFileName + String.format("%02d", a) + ".jpg"
+                            saveFile(response, directory)
+                            a++
+                            Log.d("Download", directory)
+                            Log.d("Download", a.toString())
+                        }
                     }
+                    emit(UIState.SUCCESS())
+                    a = 0
+                } catch (e: Exception) {
+                    emit(UIState.ERROR(e))
                 }
-                a = 0
             }
-            catch (e:Exception) {
-                println(e)
+            flowHolder.collect {
+                withContext(Dispatchers.Main) {
+                }
+                _data.postValue(it)
             }
         }
     }
+
+    fun downloadPngFromUrl() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val flowHolder: Flow<UIState> = flow {
+                emit(UIState.LOADING)
+                try {
+                    readPngFromUrl(link).let {
+                        it.forEach { link ->
+                            val response =
+                                ApiService.providesRetrofitClient().downloadFile(link).body()
+                            val directory = "/storage/emulated/0/Download/" +
+                                    newFileName + String.format("%02d", a) + ".png"
+                            saveFile(response, directory)
+                            a++
+                            Log.d("Download", directory)
+                            Log.d("Download", a.toString())
+                        }
+                    }
+                    emit(UIState.SUCCESS())
+                    a = 0
+                } catch (e: Exception) {
+                    emit(UIState.ERROR(e))
+                }
+            }
+            flowHolder.collect {
+                withContext(Dispatchers.Main) {
+                }
+                _data.postValue(it)
+            }
+        }
+    }
+
     fun downloadZipFromUrl() {
         Log.d("Download", "Start")
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                readZipFromUrl(link).let {
-                    it.forEach { link ->
-                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
-                        val directory = "/storage/emulated/0/Download/" +
-                                newFileName + String.format("%02d", a) + ".zip"
-                        saveFile(body, directory)
-                        a++
-                        Log.d("Download", directory)
-                        Log.d("Download", a.toString())
+            val flowHolder: Flow<UIState> = flow {
+                emit(UIState.LOADING)
+                try {
+                    readZipFromUrl(link).let {
+                        it.forEach { link ->
+                            val response =
+                                ApiService.providesRetrofitClient().downloadFile(link).body()
+                            val directory = "/storage/emulated/0/Download/" +
+                                    newFileName + String.format("%02d", a) + ".zip"
+                            saveFile(response, directory)
+                            a++
+                            Log.d("Download", directory)
+                            Log.d("Download", a.toString())
+                        }
                     }
+                    emit(UIState.SUCCESS())
+                    a = 0
+                } catch (e: Exception) {
+                    emit(UIState.ERROR(e))
                 }
-                a = 0
             }
-            catch (e:Exception) {
-                println(e)
+            flowHolder.collect {
+                withContext(Dispatchers.Main) {
+                }
+                _data.postValue(it)
             }
         }
     }
+
     fun readAllFromUrl(link: URL) {
         val newList = mutableListOf<String>()
         viewModelScope.launch(Dispatchers.IO) {
-            val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
-                link.contains(".mp4") ||
-                link.contains(".png") ||
-                link.contains(".jpg") ||
-                link.contains(".zip") &&
-                link.contains("href=")
-                !link.contains("thumbnail")
-            }}
+            val br = BufferedReader(InputStreamReader(link.openStream())).use {
+                it.readLines().filter { link ->
+                    link.contains(".mp4") ||
+                            link.contains(".png") ||
+                            link.contains(".jpg") ||
+                            link.contains(".zip") &&
+                            link.contains("href=")
+                    !link.contains("thumbnail")
+                }
+            }
             for (url in br.filter {
                 it.contains("mp4") ||
-                it.contains(".png") ||
-                it.contains(".jpg") ||
-                it.contains(".zip") &&
-                it.contains("href=") &&
-                !it.contains("thumbnail")
+                        it.contains(".png") ||
+                        it.contains(".jpg") ||
+                        it.contains(".zip") &&
+                        it.contains("href=") &&
+                        !it.contains("thumbnail")
 
             }) {
-                if (!url.contains("download") && !url.contains("Download") && !url.contains("summary") && !url.contains("type") && !url.contains("src")) {
-                    newList.add(url
-                        .replace("href=","")
-                        .replace("src=/","")
-                        .replace("https://c1.kemono.party/","")
-                        .replace("https://c2.kemono.party/","")
-                        .replace("https://c3.kemono.party/","")
-                        .replace("https://c4.kemono.party/","")
-                        .replace("https://c5.kemono.party/","")
-                        .replace("https://c6.kemono.party/","")
-                        .replace("\"", "")
-                        .replace(" ", "")
+                if (!url.contains("download") && !url.contains("Download") && !url.contains("summary") && !url.contains(
+                        "type"
+                    ) && !url.contains("src")
+                ) {
+                    newList.add(
+                        url
+                            .replace("href=", "")
+                            .replace("src=/", "")
+                            .replace("https://c1.kemono.party/", "")
+                            .replace("https://c2.kemono.party/", "")
+                            .replace("https://c3.kemono.party/", "")
+                            .replace("https://c4.kemono.party/", "")
+                            .replace("https://c5.kemono.party/", "")
+                            .replace("https://c6.kemono.party/", "")
+                            .replace("\"", "")
+                            .replace(" ", "")
                     )
                 }
             }
@@ -206,97 +217,108 @@ class KemonoViewModel: ViewModel() {
                     }
                 }
             }
-            val result = job1.await()
-            result
+            job1.await()
         }
         println(listOfLinks.toString())
     }
 }
 
 private fun readMp4FromUrl(link: URL): List<String> {
-    val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
-        link.contains(".mp4")
-                &&
-                link.contains("href=")
-    }}
+    val br = BufferedReader(InputStreamReader(link.openStream())).use {
+        it.readLines().filter { link ->
+            link.contains(".mp4")
+                    &&
+                    link.contains("href=")
+        }
+    }
     val newList = mutableListOf<String>()
     for (url in br) {
-        newList.add(url
-            .replace("href=","")
-            .replace("https://c1.kemono.party/","")
-            .replace("https://c2.kemono.party/","")
-            .replace("https://c3.kemono.party/","")
-            .replace("https://c4.kemono.party/","")
-            .replace("https://c5.kemono.party/","")
-            .replace("https://c6.kemono.party/","")
-            .replace("\"", "")
+        newList.add(
+            url
+                .replace("href=", "")
+                .replace("https://c1.kemono.party/", "")
+                .replace("https://c2.kemono.party/", "")
+                .replace("https://c3.kemono.party/", "")
+                .replace("https://c4.kemono.party/", "")
+                .replace("https://c5.kemono.party/", "")
+                .replace("https://c6.kemono.party/", "")
+                .replace("\"", "")
         )
-        Log.d("Links2",url)
+        Log.d("Links2", url)
     }
     return newList
 }
 
 private fun readJpgFromUrl(link: URL): List<String> {
-    val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
-        link.contains(".jpg")
-                &&
-                link.contains("href=")
-    }}
+    val br = BufferedReader(InputStreamReader(link.openStream())).use {
+        it.readLines().filter { link ->
+            link.contains(".jpg")
+                    &&
+                    link.contains("href=")
+        }
+    }
     val newList = mutableListOf<String>()
     for (url in br) {
-        newList.add(url
-            .replace("href=","")
-            .replace("https://c1.kemono.party/","")
-            .replace("https://c2.kemono.party/","")
-            .replace("https://c3.kemono.party/","")
-            .replace("https://c4.kemono.party/","")
-            .replace("https://c5.kemono.party/","")
-            .replace("https://c6.kemono.party/","")
-            .replace("\"", "")
+        newList.add(
+            url
+                .replace("href=", "")
+                .replace("https://c1.kemono.party/", "")
+                .replace("https://c2.kemono.party/", "")
+                .replace("https://c3.kemono.party/", "")
+                .replace("https://c4.kemono.party/", "")
+                .replace("https://c5.kemono.party/", "")
+                .replace("https://c6.kemono.party/", "")
+                .replace("\"", "")
         )
     }
     return newList
 }
 
 private fun readPngFromUrl(link: URL): List<String> {
-    val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
-        link.contains(".png")
-                &&
-                link.contains("href=")
-    }}
+    val br = BufferedReader(InputStreamReader(link.openStream())).use {
+        it.readLines().filter { link ->
+            link.contains(".png")
+                    &&
+                    link.contains("href=")
+        }
+    }
     val newList = mutableListOf<String>()
     for (url in br) {
-        newList.add(url
-            .replace("href=","")
-            .replace("https://c1.kemono.party/","")
-            .replace("https://c2.kemono.party/","")
-            .replace("https://c3.kemono.party/","")
-            .replace("https://c4.kemono.party/","")
-            .replace("https://c5.kemono.party/","")
-            .replace("https://c6.kemono.party/","")
-            .replace("\"", "")
+        newList.add(
+            url
+                .replace("href=", "")
+                .replace("https://c1.kemono.party/", "")
+                .replace("https://c2.kemono.party/", "")
+                .replace("https://c3.kemono.party/", "")
+                .replace("https://c4.kemono.party/", "")
+                .replace("https://c5.kemono.party/", "")
+                .replace("https://c6.kemono.party/", "")
+                .replace("\"", "")
         )
     }
     return newList
 }
 
 private fun readZipFromUrl(link: URL): List<String> {
-    val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
-        link.contains(".zip")
-                &&
-                link.contains("href=")
-    }}
+    val br = BufferedReader(InputStreamReader(link.openStream())).use {
+        it.readLines().filter { link ->
+            link.contains(".zip")
+                    &&
+                    link.contains("href=")
+        }
+    }
     val newList = mutableListOf<String>()
     for (url in br) {
-        newList.add(url
-            .replace("href=","")
-            .replace("https://c1.kemono.party/","")
-            .replace("https://c2.kemono.party/","")
-            .replace("https://c3.kemono.party/","")
-            .replace("https://c4.kemono.party/","")
-            .replace("https://c5.kemono.party/","")
-            .replace("https://c6.kemono.party/","")
-            .replace("\"", "")
+        newList.add(
+            url
+                .replace("href=", "")
+                .replace("https://c1.kemono.party/", "")
+                .replace("https://c2.kemono.party/", "")
+                .replace("https://c3.kemono.party/", "")
+                .replace("https://c4.kemono.party/", "")
+                .replace("https://c5.kemono.party/", "")
+                .replace("https://c6.kemono.party/", "")
+                .replace("\"", "")
         )
     }
     return newList

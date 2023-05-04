@@ -77,6 +77,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0" />
+
     <Button
         android:id="@+id/Setbutton"
         android:layout_width="wrap_content"
@@ -111,9 +112,9 @@
         app:layout_constraintTop_toBottomOf="@+id/Setbutton"
         app:layout_constraintVertical_bias="0.0"
         tools:itemCount="1"
-        tools:listitem="@layout/image_holder"/>
+        tools:listitem="@layout/image_holder" />
 
-    <androidx.core.widget.ContentLoadingProgressBar
+    <ProgressBar
         android:id="@+id/Loading"
         android:layout_width="0dp"
         android:layout_height="0dp"
