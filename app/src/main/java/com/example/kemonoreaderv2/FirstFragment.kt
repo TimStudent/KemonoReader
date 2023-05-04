@@ -16,6 +16,7 @@ import com.example.kemonoreaderv2.utils.UIState
 import com.example.kemonoreaderv2.viewModel.KemonoViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 import java.lang.Exception
 import java.net.URL
 
@@ -41,6 +42,11 @@ class FirstFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        binding.downloadMp4.visibility = View.INVISIBLE
+        binding.downloadPng.visibility = View.INVISIBLE
+        binding.downloadZip.visibility = View.INVISIBLE
+        binding.downloadJpg.visibility = View.INVISIBLE
+        binding.RefreshButton.visibility = View.INVISIBLE
         mKemonoViewModel.data.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is UIState.LOADING -> {
@@ -74,11 +80,7 @@ class FirstFragment : Fragment() {
         recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.RefreshButton.setOnClickListener {
-                onResume()
-            }
             binding.Setbutton.setOnClickListener {
                 try {
                     mKemonoViewModel.link = URL(binding.linkInput.text.toString())
@@ -116,6 +118,8 @@ class FirstFragment : Fragment() {
     }
     private fun check() {
         mKemonoViewModel.readAllFromUrl(mKemonoViewModel.link)
+        adapter.update(mKemonoViewModel.listOfLinks)
+        println(adapter.itemCount.toString())
         if (mKemonoViewModel.mp4State) {
             binding.downloadMp4.visibility = View.VISIBLE
         }else {
@@ -140,9 +144,7 @@ class FirstFragment : Fragment() {
         mKemonoViewModel.jpgState = false
         mKemonoViewModel.pngState = false
         mKemonoViewModel.zipState = false
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-            adapter.update(mKemonoViewModel.listOfLinks)
-            println(adapter.itemCount.toString())
-        }
+        onResume()
+        onResume()
     }
 }

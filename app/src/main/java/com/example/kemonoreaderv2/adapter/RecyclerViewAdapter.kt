@@ -1,11 +1,19 @@
 package com.example.kemonoreaderv2.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.MediaController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kemonoreaderv2.R
 import com.example.kemonoreaderv2.databinding.ImageHolderBinding
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 
 class RecyclerViewAdapter(
     private var listOfLinks: MutableList<String> = mutableListOf(),
@@ -24,13 +32,18 @@ class RecyclerViewAdapter(
     fun add(Links: List<String>) {
         listOfLinks.addAll(Links)
     }
+    @SuppressLint("NotifyDataSetChanged")
     fun update(links: List<String>) {
         listOfLinks.clear()
         listOfLinks.addAll(links)
+        notifyDataSetChanged()
     }
 }
 class ViewHolder(private val binding: ImageHolderBinding): RecyclerView.ViewHolder(binding.root) {
+    @SuppressLint("ResourceAsColor")
     fun bind(link: String, listener: (String) -> Unit) {
+        binding.videoView.visibility = View.INVISIBLE
+        val videoList = mutableListOf<String>()
         if (link.contains(".jpg") || link.contains(".png")) {
             Picasso
                 .get()
@@ -39,7 +52,14 @@ class ViewHolder(private val binding: ImageHolderBinding): RecyclerView.ViewHold
                 .into(binding.imageView)
         }
         if (link.contains(".mp4")) {
+            binding.videoView.visibility = View.VISIBLE
             //exoplayer for streaming
+            val player = ExoPlayer.Builder(binding.videoView.context)
+                .build()
+            binding.videoView.player = player
+            val mediaItem = MediaItem.fromUri(link)
+            player.setMediaItem(mediaItem)
+            player.prepare()
         }
         listener.invoke(link)
     }

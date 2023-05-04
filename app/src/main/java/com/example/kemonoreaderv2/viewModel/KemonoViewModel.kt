@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import okhttp3.internal.wait
 import java.io.*
 import java.net.URL
 
@@ -29,6 +30,10 @@ class KemonoViewModel: ViewModel() {
     var listOfLinks = mutableListOf<String>()
     private val _data: MutableLiveData<UIState> = MutableLiveData(UIState.LOADING)
     val data: LiveData<UIState> get() = _data
+
+    init {
+
+    }
 
     fun downloadMp4FromUrl() {
         Log.d("Download", "Start")
@@ -50,58 +55,58 @@ class KemonoViewModel: ViewModel() {
             }
         }
     }
-    fun downloadJpgFromUrl() {
-        Log.d("Download", "Start")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                readJpgFromUrl(link).let {
-                    for (link in it) {
-                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
-                        val directory = "/storage/emulated/0/Download/" +
-                                newFileName + String.format("%02d", a) + ".jpg"
-                        saveFile(body, directory)
-                        a++
-                        Log.d("Download", directory)
-                        Log.d("Download", a.toString())
-                    }
-                }
-                a = 0
-            }
-            catch (e:Exception) {
-                println(e)
-            }
-        }
-    }
 //    fun downloadJpgFromUrl() {
+//        Log.d("Download", "Start")
 //        viewModelScope.launch(Dispatchers.IO) {
-//            val flowHolder: Flow<UIState> = flow {
-//                emit(UIState.LOADING)
-//                try {
-//                    readJpgFromUrl(link).let {
-//                        for (link in it) {
-//                            val response = ApiService.providesRetrofitClient().downloadFile(link)
-//                            if (response.isSuccessful) {
-//                                response.body()?.let { body ->
-//                                    emit(UIState.SUCCESS())
-//                                    val directory = "/storage/emulated/0/Download/" +
-//                                    newFileName + String.format("%02d", a) + ".jpg"
-//                                    saveFile(body, directory)
-//                                }
-//                            }
-//                        }
+//            try {
+//                readJpgFromUrl(link).let {
+//                    for (link in it) {
+//                        val body = ApiService.providesRetrofitClient().downloadFile(link).body()
+//                        val directory = "/storage/emulated/0/Download/" +
+//                                newFileName + String.format("%02d", a) + ".jpg"
+//                        saveFile(body, directory)
+//                        a++
+//                        Log.d("Download", directory)
+//                        Log.d("Download", a.toString())
 //                    }
 //                }
-//                catch (e: Exception) {
-//                    emit(UIState.ERROR(e))
-//                }
+//                a = 0
 //            }
-//            flowHolder.collect {
-//                withContext(Dispatchers.Main) {
-//                }
-//                _data.postValue(it)
+//            catch (e:Exception) {
+//                println(e)
 //            }
 //        }
 //    }
+    fun downloadJpgFromUrl() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val flowHolder: Flow<UIState> = flow {
+                emit(UIState.LOADING)
+                try {
+                    readJpgFromUrl(link).let {
+                        for (link in it) {
+                            val response = ApiService.providesRetrofitClient().downloadFile(link)
+                            if (response.isSuccessful) {
+                                response.body()?.let { body ->
+                                    emit(UIState.SUCCESS())
+                                    val directory = "/storage/emulated/0/Download/" +
+                                    newFileName + String.format("%02d", a) + ".jpg"
+                                    saveFile(body, directory)
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (e: Exception) {
+                    emit(UIState.ERROR(e))
+                }
+            }
+            flowHolder.collect {
+                withContext(Dispatchers.Main) {
+                }
+                _data.postValue(it)
+            }
+        }
+    }
     fun downloadPngFromUrl() {
         Log.d("Download", "Start")
         viewModelScope.launch(Dispatchers.IO) {
@@ -147,8 +152,8 @@ class KemonoViewModel: ViewModel() {
         }
     }
     fun readAllFromUrl(link: URL) {
+        val newList = mutableListOf<String>()
         viewModelScope.launch(Dispatchers.IO) {
-            val newList = mutableListOf<String>()
             val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
                 link.contains(".mp4") ||
                 link.contains(".png") ||
@@ -180,7 +185,6 @@ class KemonoViewModel: ViewModel() {
                         .replace(" ", "")
                     )
                 }
-
             }
             val job1 = async {
                 for (links in newList) {
@@ -196,20 +200,18 @@ class KemonoViewModel: ViewModel() {
                     if (links.contains(".zip")) {
                         zipState = true
                     }
+                    listOfLinks.clear()
+                    newList.forEach {
+                        listOfLinks.add("https://kemono.party/$it")
+                    }
                 }
             }
-            job1.await()
-            val job2 = async {
-                listOfLinks.clear()
-                newList.forEach {
-                    listOfLinks.add("https://kemono.party/$it")
-                }
-            }
-            job2.await()
+            val result = job1.await()
+            result
         }
+        println(listOfLinks.toString())
     }
 }
-
 
 private fun readMp4FromUrl(link: URL): List<String> {
     val br = BufferedReader(InputStreamReader(link.openStream())).use { it.readLines().filter { link->
