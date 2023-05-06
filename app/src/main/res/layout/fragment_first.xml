@@ -71,7 +71,7 @@
         android:id="@+id/nameInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="new file name here"
+        android:hint="New file name here. Ex: 'a' becomes a00"
         app:layout_constraintBottom_toTopOf="@+id/download_mp4"
         app:layout_constraintEnd_toEndOf="@+id/recyclerView"
         app:layout_constraintStart_toStartOf="parent"

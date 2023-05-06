@@ -4,16 +4,12 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.MediaController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kemonoreaderv2.R
 import com.example.kemonoreaderv2.databinding.ImageHolderBinding
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.squareup.picasso.Picasso
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 
 class RecyclerViewAdapter(
     private var listOfLinks: MutableList<String> = mutableListOf(),

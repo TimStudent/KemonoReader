@@ -1,8 +1,6 @@
 package com.example.kemonoreaderv2.utils.api
 
-import com.google.gson.Gson
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import okhttp3.OkHttpClient

@@ -14,13 +14,16 @@ import com.example.kemonoreaderv2.adapter.RecyclerViewAdapter
 import com.example.kemonoreaderv2.databinding.FragmentFirstBinding
 import com.example.kemonoreaderv2.utils.UIState
 import com.example.kemonoreaderv2.viewModel.KemonoViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.internal.wait
-import java.lang.Exception
 import java.net.URL
+import kotlin.Exception
 
 class FirstFragment : Fragment() {
+
+    /**
+     * TODO: Rewrite Code so that you can choose to either download individual files or download as batch
+     *
+     */
 
     private val binding by lazy {
         FragmentFirstBinding.inflate(layoutInflater)
@@ -60,9 +63,28 @@ class FirstFragment : Fragment() {
                         .create()
                         .show()
                 }
+                is UIState.LOADING2 -> {
+                    binding.Loading.visibility = View.VISIBLE
+                }
                 is UIState.SUCCESS -> {
                     binding.Loading.visibility = View.INVISIBLE
                     state.success?.let { adapter.update(it) }
+                }
+                is UIState.SUCCESS2 -> {
+                    check()
+                    binding.Loading.visibility = View.INVISIBLE
+                    state.success2?.let {
+                        mKemonoViewModel.jpgState = it.jpgState
+                        mKemonoViewModel.pngState = it.pngState
+                        mKemonoViewModel.mp4State = it.mp4State
+                        mKemonoViewModel.zipState = it.zipState
+                        mKemonoViewModel.listOfLinks = it.links
+                        println(mKemonoViewModel.jpgState)
+                        println(mKemonoViewModel.pngState)
+                        println(mKemonoViewModel.mp4State)
+                        println(mKemonoViewModel.zipState)
+                        println(mKemonoViewModel.listOfLinks)
+                    }
                 }
                 is UIState.ERROR -> {
                     binding.Loading.visibility = View.VISIBLE
@@ -88,12 +110,12 @@ class FirstFragment : Fragment() {
         binding.Loading.visibility = View.INVISIBLE
         recyclerView = binding.recyclerView
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        recyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         viewLifecycleOwner.lifecycleScope.launch {
             binding.Setbutton.setOnClickListener {
                 try {
-                    mKemonoViewModel.link = URL(binding.linkInput.text.toString())
-                    check()
+                    mKemonoViewModel.readAllFromUrl(URL(binding.linkInput.text.toString()))
                 } catch (e: Exception) {
                     AlertDialog.Builder(requireActivity())
                         .setTitle("Error")
@@ -104,51 +126,46 @@ class FirstFragment : Fragment() {
             }
             binding.downloadMp4.setOnClickListener {
                 mKemonoViewModel.newFileName = binding.nameInput.text.toString()
-                mKemonoViewModel.downloadMp4FromUrl()
+                mKemonoViewModel.downloadSwitchCase(URL(binding.linkInput.text.toString()), ".mp4")
             }
             binding.downloadJpg.setOnClickListener {
                 mKemonoViewModel.newFileName = binding.nameInput.text.toString()
-                mKemonoViewModel.downloadJpgFromUrl()
+                mKemonoViewModel.downloadSwitchCase(URL(binding.linkInput.text.toString()), ".jpg")
             }
             binding.downloadPng.setOnClickListener {
                 mKemonoViewModel.newFileName = binding.nameInput.text.toString()
-                mKemonoViewModel.downloadPngFromUrl()
+                mKemonoViewModel.downloadSwitchCase(URL(binding.linkInput.text.toString()), ".png")
             }
             binding.downloadZip.setOnClickListener {
                 mKemonoViewModel.newFileName = binding.nameInput.text.toString()
-                mKemonoViewModel.downloadZipFromUrl()
+                mKemonoViewModel.downloadSwitchCase(URL(binding.linkInput.text.toString()), ".zip")
             }
         }
     }
+
     private fun check() {
-        mKemonoViewModel.readAllFromUrl(mKemonoViewModel.link)
         adapter.update(mKemonoViewModel.listOfLinks)
-        println(adapter.itemCount.toString())
         if (mKemonoViewModel.mp4State) {
             binding.downloadMp4.visibility = View.VISIBLE
-        }else {
+        } else {
             binding.downloadMp4.visibility = View.INVISIBLE
         }
         if (mKemonoViewModel.jpgState) {
             binding.downloadJpg.visibility = View.VISIBLE
-        }else {
+        } else {
             binding.downloadJpg.visibility = View.INVISIBLE
         }
         if (mKemonoViewModel.pngState) {
             binding.downloadPng.visibility = View.VISIBLE
-        }else {
+        } else {
             binding.downloadPng.visibility = View.INVISIBLE
         }
         if (mKemonoViewModel.zipState) {
             binding.downloadZip.visibility = View.VISIBLE
-        }else {
+        } else {
             binding.downloadZip.visibility = View.INVISIBLE
         }
-        mKemonoViewModel.mp4State = false
-        mKemonoViewModel.jpgState = false
-        mKemonoViewModel.pngState = false
-        mKemonoViewModel.zipState = false
-        onResume()
-        onResume()
+        println(adapter.itemCount.toString())
+        println(mKemonoViewModel.jpgState.toString() + mKemonoViewModel.pngState.toString() + mKemonoViewModel.mp4State.toString() + mKemonoViewModel.zipState.toString())
     }
 }
